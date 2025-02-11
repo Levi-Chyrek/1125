@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Professional Video Player</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: #121212;
+      color: #ffffff;
+      margin: 0;
+      justify-content: ;
+      height: 105vh;
+    }
+
+    #videoContainer {
+      position: fixed;
+      width: 100%;
+      max-width: 1600px;
+      min-height:100vh; 
+      /* border-radius: 10px; */
+      overflow: hidden;
+      background-color: #000;
+      box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.8);
+        transition:0.2s;
+    }
+
+    #videoPlayer {
+      width: 100%;
+      height: 100vh;
+    }
+
+      
+
+      
+video:-webkit-full-page-media {
+    margin: auto;
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    max-height: 100%;
+    max-width: 100%;
+}
+      
+      .controls-hover {
+                height: 40%;
+                box-sizing: border-box;
+          position: absolute;
+      bottom: 0;
+      width: 100%;
+      transition: opacity 0.3s;
+          display: flex;
+          align-items: flex-end;
+    pointer-events: none;
+          }
+
+    .controls {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 10px;
+      background: linear-gradient(0deg, black, transparent 100%);
+      bottom: 0;
+      width: 100%;
+      transition: opacity 0.3s;
+      opacity: 0;
+        height: 70%;
+        box-sizing: border-box;
+    pointer-events: all;
+    }
+
+
+      
+    #videoContainer .controls-hover:hover .controls {
+      opacity: 1;
+    }
+
+    #videoContainer .controls .controls-wrapper {
+            display:flex;
+           width:100%;
+        align-items: center;
+            pointer-events: all;
+
+
+        }
+
+    .control-icon {
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+      transition: transform 0.2s, fill 0.2s;
+      fill: #ccc;
+    }
+
+    .control-icon:hover {
+      fill: #ffffff;
+      transform: scale(1.1);
+    }
+
+    .playPause, .fullscreen, .volumeIcon {
+      padding: 0 15px;
+    }
+
+    .progress-container {
+      flex-grow: 1;
+      display: flex;
+      align-items: center;
+      margin: 0 15px;
+    }
+
+    /* Progress Bar */
+    .progress-bar {
+      width: 100%;
+      height: 10px;
+      background: #444;
+      cursor: pointer;
+      position: relative;
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .progress-bar .filled {
+      height: 100%;
+      background-color: darkgreen;
+      width: 0;
+        position: absolute;
+    z-index: 4;
+        border-radius: 99px;
+    }
+
+    .progress-bar .buffered {
+      height: 100%;
+      background-color: rgba(255, 255, 255, 0.3);
+      width: 0;
+      position: absolute;
+      top: 0;
+      left: 0;
+                border-radius: 99px;
+
+    }
+
+    /* Volume Control */
+    .volumeControl {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .volumeControl input[type="range"] {
+      width: 80px;
+      cursor: pointer;
+    }
+
+      .volumeControl .mute {
+      cursor: pointer;
+
+          }
+
+       .volumeControl  svg {
+      cursor: pointer;
+width:20px;
+           fill: white;
+          }
+
+    /* Time Display */
+    .time {
+      font-size: 14px;
+      color: #ccc;
+      margin: 0 15px;
+    }
+
+    /* Input Field Styling */
+    #videoUrlInput {
+      width: 80%;
+      max-width: 800px;
+      padding: 0px;
+      font-size: 20px;
+      margin-bottom: 15px;
+      border: none;
+      border-radius: 10px;
+      box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.4);
+      z-index:99;
+      height:0px;
+        overflow:hidden;
+        margin-top:30vh;
+        border:none;
+        position:fixed;
+        box-sizing:border-box;
+    transition:0.4s;
+                outline: 7px solid transparent;
+        outline-offset:-5px;
+
+    }
+
+    #videoUrlInput:focus {
+        outline: 7px solid green;
+
+
+        }
+      
+      .spinner {
+  animation: spin 1s linear infinite;
+  width: 24px;
+  height: 24px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+        
+
+.path {
+  stroke: #fff;
+  stroke-linecap: round;
+  stroke-dasharray: 90,150;
+  stroke-dashoffset: 0;
+  animation: dash 1.5s ease-in-out infinite;
+}
+
+@keyframes dash {
+  0% { stroke-dasharray: 1,200; stroke-dashoffset: 0; }
+  50% { stroke-dasharray: 90,150; stroke-dashoffset: -40px; }
+  100% { stroke-dasharray: 90,150; stroke-dashoffset: -120px; }
+}
+
+        #toggleMuteButton {
+                margin-right:10px;
+
+            }
+
+  </style>
+</head>
+<body>
+
+  <!-- Video URL Input Field -->
+  <input type="text" id="videoUrlInput" placeholder="Enter video URL and press Enter" value="">
+  
+  <div id="videoContainer">
+    <video id="videoPlayer" autoplay autofocus ></video>
+      <div class="controls-hover">
+    <div class="controls"><div class="controls-wrapper">
+      <svg class="control-icon playPause" onclick="togglePlayPause()" viewBox="0 0 24 24">
+        <path d="M8 5v14l11-7z"></path> <!-- Play Icon -->
+      </svg>
+      <div class="progress-container">
+        <div class="progress-bar" onclick="seekVideo(event)">
+          <div class="filled"></div>
+                      <div class="buffered"></div>
+
+        </div>
+      </div>
+      <div class="volumeControl"><div id="toggleMuteButton">
+        <svg class="control-icon volumeIcon" onclick="toggleMute()" viewBox="0 0 24 24">
+          <path d="M3 9v6h4l5 5V4L7 9H3z"></path> <!-- Volume Icon -->
+        </svg></div>
+        <input type="range" id="volumeControl" value="1" min="0" max="1" step="0.1" onchange="setVolume()">
+      </div>
+      <div class="time">
+        <span id="currentTime">0:00</span> / <span id="duration">0:00</span>
+      </div>
+      <a class="control-icon fullscreen" onclick="toggleFullScreen()" viewBox="0 0 24 24">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M32 32C14.3 32 0 46.3 0 64l0 96c0 17.7 14.3 32 32 32s32-14.3 32-32l0-64 64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L32 32zM64 352c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 96c0 17.7 14.3 32 32 32l96 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0 0-64zM320 32c-17.7 0-32 14.3-32 32s14.3 32 32 32l64 0 0 64c0 17.7 14.3 32 32 32s32-14.3 32-32l0-96c0-17.7-14.3-32-32-32l-96 0zM448 352c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 64-64 0c-17.7 0-32 14.3-32 32s14.3 32 32 32l96 0c17.7 0 32-14.3 32-32l0-96z"/></svg>
+      </a>
+    </div>
+        </div>
+  </div></div>
+
+  <script>
+//window.addEventListener('wheel', function(event) {
+  //event.preventDefault();
+  // window.scrollBy(0, event.deltaY * 1);
+//});
+
+      
+const videoPlayer = document.getElementById('videoPlayer');
+const videoContainer = document.getElementById("videoContainer"); // Ensure the video is inside a container
+const playPauseButton = document.querySelector('.playPause');
+const progressBar = document.querySelector('.progress-bar .filled');
+const bufferedBar = document.querySelector('.progress-bar .buffered');
+const progressContainer = document.querySelector('.progress-bar');
+const volumeControl = document.getElementById('volumeControl');
+const currentTimeDisplay = document.getElementById('currentTime');
+const durationDisplay = document.getElementById('duration');
+const volumeIcon = document.querySelector('.volumeIcon');
+const controls = document.getElementById("controls");
+const videoUrlInput = document.getElementById('videoUrlInput');
+const toggleMuteButton = document.getElementById("toggleMuteButton"); // Mute button
+const urlParams = new URLSearchParams(window.location.search);
+const sourceURL = urlParams.get('source');
+
+const videoElement = document.querySelector('video'); // Or document.getElementById('yourVideoId') if you have an ID
+const video = document.querySelector('video'); // Or document.getElementById('yourVideoId') if you have an ID
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Your code to run after the DOM is fully loaded
+  console.log('DOM fully loaded and parsed');
+ volumeControl.focus();
+
+});
+      
+if (sourceURL && videoElement) {
+  videoElement.src = sourceURL;
+
+  // Optional: If you want to load the video immediately:
+  // videoElement.load();
+
+    // Optional: Add an event listener for errors:
+    videoElement.addEventListener('error', (error) => {
+        console.error('Error loading video:', error);
+        // Handle the error, e.g., display a message to the user
+        // or set a fallback source.
+    });
+
+} else {
+  console.log("No 'source' URL parameter found, or video element not found.");
+  // You might want to set a default video source here if needed.
+  // videoElement.src = "path/to/default/video.mp4";
+}
+
+      video.addEventListener('playing', () => {
+    video.muted = false;
+});
+
+
+
+      
+
+window.addEventListener("scroll", function() {
+  // Get the current scroll position
+  const scrollPosition = window.scrollY;
+    
+  // Update the div's position based on the scroll position
+  videoUrlInput.style.height =  scrollPosition/0.5 + "px"; // Example: moves div right slower than scroll
+    videoUrlInput.style.padding =  scrollPosition/1.5 + "px 40px"; // Example: moves div right slower than scroll
+    // videoUrlInput.style.background =  "rgb(255 255 255 / " + scrollPosition/1+ "%)"; // Example: moves div right slower than scroll
+   //     videoUrlInput.style.color =  "rgb(1 1 1 / " + scrollPosition/1+ "%)"; // Example: moves div right slower than scroll
+    //    videoUrlInput.style.filter =  "opacity( " + scrollPosition/0.9 + "%)"; // Example: moves div right slower than scroll
+    let opacity = Math.max(20, scrollPosition / 0.4); // Ensure minimum opacity starts at 20
+    videoUrlInput.style.filter = "opacity(" + opacity + "%)";
+           videoContainer.style.filter = "blur(" + (100, scrollPosition / 2) +  "px)";
+
+//    videoUrlInput.style.fontSize =  scrollPosition/4 + 10 + "px"; // Example: moves div right slower than scroll
+if (window.scrollY < 24) {
+    unfocusInput();
+// console.log(scrollPosition);
+    } 
+// else if (window.scrollY >= 25 && window.scrollY <= 26) {window.scrollTo(0, -1);} 
+else if (window.scrollY > 30) {
+  // console.log("Scrolled more than 51px");
+    focusInput();
+} else { // Implicitly, window.scrollY is 50 or 51
+  // console.log("Scrolled 50 or 51px");
+    
+}
+});
+  function unfocusInput() {
+    document.activeElement.blur();
+    document.getElementById("videoUrlInput").placeholder = "scroll down...";
+
+  } 
+
+ function focusInput() {
+    document.getElementById("videoUrlInput").focus();
+    document.getElementById("videoUrlInput").select();
+document.getElementById("videoUrlInput").placeholder = "Enter video URL and press Enter";
+//  window.scrollTo(0, document.body.scrollHeight); // Example
+   //  videoContainer.style.filter = "blur(20px)";
+
+  }
+
+
+
+
+      
+let isDragging = false;
+let isBuffering = false;
+
+// Load Video from Input Field
+videoUrlInput.addEventListener('keypress', function(event) {
+  if (event.key === 'Enter') {
+    loadVideo(videoUrlInput.value);
+  }
+});
+
+
+
+
+function loadVideo(url) {
+  videoPlayer.src = url;
+  videoPlayer.load();
+  videoPlayer.addEventListener('loadedmetadata', () => {
+    durationDisplay.textContent = formatTime(videoPlayer.duration);
+  });
+}
+
+// Play/Pause Toggle
+function togglePlayPause(event) {
+  event.stopPropagation(); // Prevent interference from dragging
+  if (videoPlayer.paused) {
+    videoPlayer.play();
+  } else {
+    videoPlayer.pause();
+  }
+}
+
+// Update Play/Pause Button
+function updatePlayPauseButton() {
+  if (isBuffering) {
+    playPauseButton.innerHTML = `<svg class="spinner" viewBox="0 0 50 50">
+      <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+    </svg>`;
+  } else {
+    playPauseButton.innerHTML = videoPlayer.paused
+      ? '<path d="M8 5v14l11-7z"></path>'  // Play icon
+      : '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path>'; // Pause icon
+  }
+}
+
+// Handle Buffering Events
+videoPlayer.addEventListener('waiting', () => {
+  isBuffering = true;
+  updatePlayPauseButton();
+});
+
+videoPlayer.addEventListener('playing', () => {
+  isBuffering = false;
+  updatePlayPauseButton();
+});
+
+// Update Progress Bar
+function updateProgress() {
+  if (!isDragging) {
+    progressBar.style.width = `${(videoPlayer.currentTime / videoPlayer.duration) * 100}%`;
+  }
+  currentTimeDisplay.textContent = formatTime(videoPlayer.currentTime);
+
+  if (videoPlayer.buffered.length > 0) {
+    const bufferedEnd = videoPlayer.buffered.end(videoPlayer.buffered.length - 1);
+    bufferedBar.style.width = `${(bufferedEnd / videoPlayer.duration) * 100}%`;
+  }
+}
+
+// Seek Video (Drag & Click)
+function seekVideo(event) {
+  const rect = progressContainer.getBoundingClientRect();
+  const pos = (event.clientX - rect.left) / rect.width;
+  videoPlayer.currentTime = pos * videoPlayer.duration;
+}
+
+// Drag Events for Progress Bar
+function startDrag(event) {
+  isDragging = true;
+  seekVideo(event);
+}
+
+function dragging(event) {
+  if (isDragging) {
+    seekVideo(event);
+  }
+}
+
+function endDrag(event) {
+  if (isDragging) {
+    seekVideo(event);
+    isDragging = false;
+  }
+}
+
+// Prevent Drag from Blocking Play/Pause
+document.addEventListener('mouseup', () => (isDragging = false));
+
+// Set Volume
+function setVolume() {
+  videoPlayer.volume = volumeControl.value;
+  volumeIcon.innerHTML = videoPlayer.volume === 0
+    ? '<path d="M3 9v6h4l5 5V4L7 9H3z M19 12l-4-4v8z"></path>'
+    : videoPlayer.volume > 0.5
+    ? '<path d="M3 9v6h4l5 5V4L7 9H3z M19 12l-4-4v8z"></path>'
+    : '<path d="M3 9v6h4l5 5V4L7 9H3z"></path>';
+}
+
+// Toggle Fullscreen
+function toggleFullScreen() {
+  if (!document.fullscreenElement) {
+    videoPlayer.requestFullscreen();
+  } else {
+    document.exitFullscreen();
+  }
+}
+
+// Format Time (mm:ss)
+function formatTime(seconds) {
+  const min = Math.floor(seconds / 60);
+  const sec = Math.floor(seconds % 60).toString().padStart(2, '0');
+  return `${min}:${sec}`;
+}
+
+// Event Listeners
+videoPlayer.addEventListener('timeupdate', updateProgress);
+videoPlayer.addEventListener('play', updatePlayPauseButton);
+videoPlayer.addEventListener('pause', updatePlayPauseButton);
+playPauseButton.addEventListener('click', togglePlayPause);
+
+progressContainer.addEventListener('mousedown', startDrag);
+
+      
+let hideControlsTimeout;
+
+// Function to hide controls after 3 seconds
+function hideControls() {
+  // controls.style.opacity = "0";
+}
+
+// Function to show controls
+function showControls() {
+  // controls.style.opacity = "1";
+  clearTimeout(hideControlsTimeout);
+  hideControlsTimeout = setTimeout(hideControls, 3000);
+}
+
+// Show controls when mouse moves
+videoContainer.addEventListener("mousemove", showControls);
+
+// Hide controls initially after 3 seconds
+hideControlsTimeout = setTimeout(hideControls, 3000);
+
+// Toggle play/pause when clicking the video
+videoPlayer.addEventListener("click", () => {
+  if (videoPlayer.paused) {
+    videoPlayer.play();
+  } else {
+    videoPlayer.pause();
+  }
+});
+
+// Toggle mute and update icon
+function toggleMute() {
+  videoPlayer.muted = !videoPlayer.muted;
+  updateMuteButton();
+}
+
+// Update mute button icon
+function updateMuteButton() {
+  if (videoPlayer.muted) {
+    toggleMuteButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><path d="M301.1 34.8C312.6 40 320 51.4 320 64l0 384c0 12.6-7.4 24-18.9 29.2s-25 3.1-34.4-5.3L131.8 352 64 352c-35.3 0-64-28.7-64-64l0-64c0-35.3 28.7-64 64-64l67.8 0L266.7 40.1c9.4-8.4 22.9-10.4 34.4-5.3zM425 167l55 55 55-55c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9l-55 55 55 55c9.4 9.4 9.4 24.6 0 33.9s-24.6 9.4-33.9 0l-55-55-55 55c-9.4 9.4-24.6 9.4-33.9 0s-9.4-24.6 0-33.9l55-55-55-55c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0z"/></svg>`; // Muted icon
+  } else {
+    toggleMuteButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><path d="M533.6 32.5C598.5 85.2 640 165.8 640 256s-41.5 170.7-106.4 223.5c-10.3 8.4-25.4 6.8-33.8-3.5s-6.8-25.4 3.5-33.8C557.5 398.2 592 331.2 592 256s-34.5-142.2-88.7-186.3c-10.3-8.4-11.8-23.5-3.5-33.8s23.5-11.8 33.8-3.5zM473.1 107c43.2 35.2 70.9 88.9 70.9 149s-27.7 113.8-70.9 149c-10.3 8.4-25.4 6.8-33.8-3.5s-6.8-25.4 3.5-33.8C475.3 341.3 496 301.1 496 256s-20.7-85.3-53.2-111.8c-10.3-8.4-11.8-23.5-3.5-33.8s23.5-11.8 33.8-3.5zm-60.5 74.5C434.1 199.1 448 225.9 448 256s-13.9 56.9-35.4 74.5c-10.3 8.4-25.4 6.8-33.8-3.5s-6.8-25.4 3.5-33.8C393.1 284.4 400 271 400 256s-6.9-28.4-17.7-37.3c-10.3-8.4-11.8-23.5-3.5-33.8s23.5-11.8 33.8-3.5zM301.1 34.8C312.6 40 320 51.4 320 64l0 384c0 12.6-7.4 24-18.9 29.2s-25 3.1-34.4-5.3L131.8 352 64 352c-35.3 0-64-28.7-64-64l0-64c0-35.3 28.7-64 64-64l67.8 0L266.7 40.1c9.4-8.4 22.9-10.4 34.4-5.3z"/></svg>`; // Unmuted icon
+  }
+}
+
+// Handle keyboard shortcuts
+document.addEventListener("keydown", (event) => {
+  if (document.activeElement === videoUrlInput) return;
+  if (event.key === "l") {
+    videoPlayer.currentTime += 10;
+  } else if (event.key === "a") {
+  let currentBrightness = parseFloat(videoPlayer.style.filter.replace("brightness(", "").replace("%)", "")) || 100; // Get current brightness
+  let newBrightness = Math.max(1, currentBrightness - 10); // Decrease by 10%, but not below 0%
+  videoPlayer.style.filter = `brightness(${newBrightness}%)`;
+} else if (event.key === "q") {
+  let currentBrightness = parseFloat(videoPlayer.style.filter.replace("brightness(", "").replace("%)", "")) || 100;
+  let newBrightness = Math.min(200, currentBrightness + 10); // Increase by 10%, up to 200% as an example
+  videoPlayer.style.filter = `brightness(${newBrightness}%)`;
+} else if (event.key === "t") {
+    window.scrollTo(0, 1); // Use scrollTo for setting scroll position
+} else if (event.key === "j") {
+    videoPlayer.currentTime -= 10;
+  } else if (event.key === "ArrowRight") {
+    videoPlayer.currentTime += 5;
+  } else if (event.key === "ArrowLeft") {
+    videoPlayer.currentTime -= 5;
+  } else if (event.key === "f") { 
+        toggleFullScreen();
+     } else if (event.key === "p") {
+      togglePictureInPicture();
+}  else if (event.key === " " || event.key === "Spacebar") {
+    event.preventDefault();
+    if (videoPlayer.paused) {
+      videoPlayer.play();
+    } else {
+      videoPlayer.pause();
+    }
+  } else if (event.key.toLowerCase() === "m") {
+    toggleMute();
+  }
+});
+
+// Update mute button when clicked
+toggleMuteButton.addEventListener("click", toggleMute);
+
+// Initialize button icon on page load
+updateMuteButton();
+
+
+      async function togglePictureInPicture() {
+  const video = document.getElementById("videoPlayer");
+
+  try {
+    if (document.pictureInPictureElement) {
+      await document.exitPictureInPicture(); // Exit PiP if already active
+    } else if (video.requestPictureInPicture) {
+      await video.requestPictureInPicture(); // Enter PiP mode
+    }
+  } catch (error) {
+    console.error("Error toggling Picture-in-Picture:", error);
+  }
+}
+
+
+</script>
+
+
+</body>
+</html>
